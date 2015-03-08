@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8"/>
+	<title>jQuery.validating</title>
+	<script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
+	<script type="text/javascript" src="../bower_components/qunit/qunit/qunit.js"></script>
+	<script type="text/javascript" src="../src/validating.js"></script>
+	<script type="text/javascript">
+		jQuery( function( $ ) {
+			"use strict";
+
+			QUnit.config.reorder = false;
+
+			QUnit.test( 'module exists', function( assert ) {
+				assert.equal( typeof $.validating, 'object' );
+				assert.equal( typeof $( '.text' ).validating, 'function' );
+			} );
+
+			QUnit.test( 'returns promise', function( assert ) {
+				var promise = $( '.text' ).validating();
+				assert.equal( typeof promise, 'object' );
+				assert.equal( typeof promise.then, 'function' );
+			} );
+
+			QUnit.test( 'empty register succeeds', function( assert ) {
+				var done = assert.async();
+				$( '.text' ).validating().then( function() {
+					assert.ok( true );
+				}, function() {
+					assert.ok( false );
+				} ).always( done );
+			} );
+
+			QUnit.test( 'append + prepend', function( assert ) {
+				var done = assert.async(),
+						test = 0;
+				$.validating.append( ':input', function() {
+					assert.equal( test, 2 );
+					test++;
+				} );
+				$.validating.append( ':input', function() {
+					assert.equal( test, 3 );
+					test++;
+				} );
+				$.validating.prepend( ':input', function() {
+					assert.equal( test, 1 );
+					test++;
+				} );
+				$.validating.append( ':input', function() {
+					assert.equal( test, 4 );
+					test++;
+				} );
+				$.validating.prepend( ':input', function() {
+					assert.equal( test, 0 );
+					test++;
+				} );
+				assert.equal( $.validating.length, 5 );
+				$( '.text' ).validating().always( function() {
+					assert.equal( test, 5 );
+					done();
+				} );
+			} );
+
+			QUnit.test( 'remove by name', function( assert ) {
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'remove by function', function( assert ) {
+				$.validating.append( ':input', $.noop );
+				$.validating.append( ':input', function() {
+				} );
+				assert.equal( $.validating.length, 2 );
+				$.validating.remove( ':input', $.noop );
+				assert.equal( $.validating.length, 1 );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'keep fixed', function( assert ) {
+				$.validating.append( ':input', $.noop, false );
+				$.validating.append( ':input', $.noop, true );
+				assert.equal( $.validating.length, 2 );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 1 );
+				$.validating.remove( ':input', $.noop );
+				assert.equal( $.validating.length, 0 );
+
+				$.validating.append( ':input', $.noop, false );
+				$.validating.append( ':input', $.noop, true );
+				assert.equal( $.validating.length, 2 );
+				$.validating.remove( ':input', $.noop );
+				assert.equal( $.validating.length, 0 );
+
+				$.validating.append( ':input', function() {
+				}, false );
+				$.validating.append( ':input', $.noop, true );
+				assert.equal( $.validating.length, 2 );
+				$.validating.remove( ':input', $.noop );
+				assert.equal( $.validating.length, 1 );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'manipulating length removes none fixed entries', function( assert ) {
+				var noop = function() {
+				};
+				$.validating.append( ':input', $.noop, false );
+				$.validating.append( ':input', $.noop, true );
+				$.validating.append( ':input', noop, false );
+				$.validating.append( ':input', noop, true );
+				assert.equal( $.validating.length, 4 );
+				$.validating.length = 0;
+				assert.equal( $.validating.length, 2 );
+				$.validating.remove( ':input', $.noop );
+				$.validating.remove( ':input', noop );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'noop validators results in successful validation', function( assert ) {
+				$.validating.append( ':input', $.noop );
+				$.validating.append( ':input', $.noop );
+				assert.equal( $.validating.length, 2 );
+				$( '.text' ).validating().then( function() {
+					assert.equal( arguments.length, 1 );
+					assert.equal( arguments[0], undefined );
+					assert.ok( true );
+				}, function() {
+					assert.equal( arguments.length, 1 );
+					assert.ok( false );
+				} );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'validators results fails by first data return', function( assert ) {
+				$.validating.append( ':input', function() {
+					return 'no1';
+				} );
+				$.validating.append( ':input', function() {
+					return 'no2'
+				} );
+				assert.equal( $.validating.length, 2 );
+				$( '.text' ).validating().then( function() {
+					assert.equal( arguments.length, 1 );
+					assert.equal( arguments[0], undefined );
+					assert.ok( false );
+				}, function( error ) {
+					assert.equal( arguments.length, 1 );
+					assert.equal( error, 'no1' );
+					assert.ok( true );
+				} );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'validators results succeeds by promise', function( assert ) {
+				var defer1 = $.Deferred(),
+						defer2 = $.Deferred(),
+						done = false;
+				$.validating.append( ':input', function() {
+					return defer1.promise();
+				} );
+				$.validating.append( ':input', function() {
+					return defer2.promise();
+				} );
+				assert.equal( $.validating.length, 2 );
+				$( '.text' ).validating().then( function() {
+					assert.equal( arguments.length, 1 );
+					assert.equal( arguments[0], undefined );
+					assert.ok( true );
+				}, function() {
+					assert.equal( arguments.length, 1 );
+					assert.ok( false );
+				} ).always( function() {
+					done = true;
+				} );
+				defer1.resolve();
+				assert.equal( done, false );
+				defer2.resolve();
+				assert.equal( done, true );
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+
+			QUnit.test( 'validators results fails by promise', function( assert ) {
+				var defer1 = $.Deferred(),
+						defer2 = $.Deferred(),
+						done=false;
+				$.validating.append( ':input', function() {
+					return defer1.promise();
+				} );
+				$.validating.append( ':input', function() {
+					return defer2.promise();
+				} );
+				assert.equal( $.validating.length, 2 );
+				$( '.text' ).validating().then( function() {
+					assert.equal( arguments.length, 1 );
+					assert.equal( arguments[0], undefined );
+					assert.ok( false );
+				}, function( error ) {
+					assert.ok( true );
+					assert.equal( arguments.length, 1 );
+					assert.equal( error, 'no2' );
+				} ).always(function(){
+					done=true;
+				});
+				defer2.reject('no2');
+				assert.equal(done,true);
+				defer2.reject('no1');
+				$.validating.remove( ':input' );
+				assert.equal( $.validating.length, 0 );
+			} );
+		} );
+	</script>
+</head>
+<body>
+	<div id="qunit"></div>
+	<div id="qunit-fixture"></div>
+	<input type="text" name="text" value="text" placeholder="text" class="text"/>
+</body>
+</html>
