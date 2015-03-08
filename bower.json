@@ -1,6 +1,6 @@
 {
   "name": "jQuery.validating",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "authors": [
     "Orianda <orianda@paan.de>"
   ],
@@ -28,8 +28,10 @@
   ],
   "dependencies": {
   },
+  "dependencies": {
+    "jquery": "~2.1.3"
+  },
   "devDependencies": {
-    "jquery": "~2.1.3",
     "qunit": "~1.17.1"
   }
 }
