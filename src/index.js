@@ -31,13 +31,20 @@
     /**
      * Create validator controller
      */
-    $.validating = function () {
+    $.Validating = function Validating() {
 
         /**
          * Validator registry
          * @type {Object[]}
          */
         var registry = [];
+
+        /**
+         * Make sure this is created by a new call
+         */
+        if (!(this instanceof Validating)) {
+            return new Validating();
+        }
 
         /**
          * Register validator
@@ -59,18 +66,18 @@
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
          */
-        function prepend(selector, validator) {
+        this.prepend = function (selector, validator) {
             insert(selector, validator, true);
-        }
+        };
 
         /**
          * Append validator to validator stack
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
          */
-        function append(selector, validator) {
+        this.append = function (selector, validator) {
             insert(selector, validator, false);
-        }
+        };
 
         /**
          * Remove validator from validator stack
@@ -78,7 +85,7 @@
          * @param {Function} [validator]
          * @returns {number}
          */
-        function remove(selector, validator) {
+        this.remove = function (selector, validator) {
             var amount = 0,
                 index, entry;
             if (selector && (isUndefined(validator) || $.isFunction(validator))) {
@@ -93,7 +100,7 @@
                 }
             }
             return amount;
-        }
+        };
 
         /**
          * Trigger validation process
@@ -101,7 +108,7 @@
          * @param {boolean} [notify=false]
          * @returns {promise}
          */
-        function validate(elements, notify) {
+        this.validate = function (elements, notify) {
             var promises = [];
 
             /**
@@ -112,7 +119,7 @@
                     elementPromises = [];
 
                 $.each(registry, function () {
-                    var issue = element.is(this.selector) && this.validator.call(element, element);
+                    var issue = element.is(this.selector) ? this.validator.call(element, element) : undefined;
                     if (isPromise(issue)) {
                         elementPromises.push(issue);
                     } else if (isBoolean(issue)) {
@@ -136,39 +143,21 @@
             });
 
             return $.when.apply($, promises).then($.noop);
-        }
-
-        /**
-         * Get amount of registered validators
-         * @returns {Number}
-         */
-        function getLength() {
-            return registry.length;
-        }
-
-        /**
-         * Reduce the registered validators to the given amount
-         * Behaves similar to native array (e.g [1,2,3,4,5,6,7,8,9,0].length = 5 -> [1,2,3,4,5])
-         * @param {number} amount
-         */
-        function setLength(amount) {
-            registry.length = amount;
-        }
+        };
 
         /**
          * Registry handler
          * @type {Object}
          */
-        return Object.defineProperty({
-            validate : validate,
-            prepend  : prepend,
-            append   : append,
-            remove   : remove
-        }, 'length', {
+        Object.defineProperty(this, 'length', {
             configurable : false,
             enumerable   : false,
-            get          : getLength,
-            set          : setLength
+            get          : function () {
+                return registry.length;
+            },
+            set          : function (length) {
+                registry.length = length;
+            }
         });
 
     };

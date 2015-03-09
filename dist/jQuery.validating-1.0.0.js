@@ -7,178 +7,168 @@
  * @author Orianda <orianda@paan.de>
  * @license MIT
  */
-(function( $ ) {
-	"use strict";
+(function ($) {
+    "use strict";
 
-	/**
-	 * Validator registry
-	 * @type {Object[]}
-	 */
-	var registry = [];
+    /**
+     * Is the value undefined?
+     * @param {*} value
+     * @returns {boolean}
+     */
+    function isUndefined(value) {
+        return typeof value === 'undefined';
+    }
 
-	/**
-	 * Is the value undefined?
-	 * @param {*} value
-	 * @returns {boolean}
-	 */
-	function isUndefined( value ) {
-		return typeof value === 'undefined';
-	}
+    /**
+     * Is the value an boolean?
+     * @param value
+     * @returns {boolean}
+     */
+    function isBoolean(value) {
+        return typeof value === 'boolean' || value instanceof Boolean;
+    }
 
-	/**
-	 * Is this a promise object?
-	 * @param {*} promise
-	 * @returns {boolean}
-	 */
-	function isPromise( promise ) {
-		return promise instanceof Object && typeof promise.then === 'function';
-	}
+    /**
+     * Is this a promise object?
+     * @param {*} promise
+     * @returns {boolean}
+     */
+    function isPromise(promise) {
+        return promise instanceof Object && typeof promise.then === 'function';
+    }
 
-	/**
-	 * Register validator
-	 * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
-	 * @param {Function} validator
-	 * @param {boolean} fix
-	 * @param {boolean} prepend
-	 */
-	function insert( selector, validator, fix, prepend ) {
-		if( selector && $.isFunction( validator ) ) {
-			registry[prepend ? 'unshift' : 'push']( {
-				selector: selector,
-				validator: validator,
-				fix: !!fix
-			} );
-		}
-	}
+    /**
+     * Create validator controller
+     */
+    $.Validating = function Validating() {
 
-	/**
-	 * Prepend validator to validator stack
-	 * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
-	 * @param {Function} validator
-	 * @param {boolean} [fix]
-	 */
-	function prepend( selector, validator, fix ) {
-		insert( selector, validator, fix, true );
-	}
+        /**
+         * Validator registry
+         * @type {Object[]}
+         */
+        var registry = [];
 
-	/**
-	 * Append validator to validator stack
-	 * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
-	 * @param {Function} validator
-	 * @param {boolean} [fix=false]
-	 */
-	function append( selector, validator, fix ) {
-		insert( selector, validator, fix, false );
-	}
+        /**
+         * Make sure this is created by a new call
+         */
+        if (!(this instanceof Validating)) {
+            return new Validating();
+        }
 
-	/**
-	 * Remove validator from validator stack
-	 * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
-	 * @param {Function} [validator]
-	 * @returns {number}
-	 */
-	function remove( selector, validator ) {
-		var amount = 0,
-			index, entry;
-		if( selector && (isUndefined( validator ) || $.isFunction( validator )) ) {
-			index = registry.length;
-			while( index > 0 ) {
-				index--;
-				entry = registry[index];
-				if( entry.selector === selector && (entry.validator === validator || !entry.fix && isUndefined( validator )) ) {
-					registry.splice( index, 1 );
-					amount++;
-				}
-			}
-		}
-		return amount;
-	}
+        /**
+         * Register validator
+         * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
+         * @param {Function} validator
+         * @param {boolean} prepend
+         */
+        function insert(selector, validator, prepend) {
+            if (selector && $.isFunction(validator)) {
+                registry[prepend ? 'unshift' : 'push']({
+                    selector  : selector,
+                    validator : validator
+                });
+            }
+        }
 
-	/**
-	 * Get amount of registered validators
-	 * @returns {Number}
-	 */
-	function getLength() {
-		return registry.length;
-	}
+        /**
+         * Prepend validator to validator stack
+         * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
+         * @param {Function} validator
+         */
+        this.prepend = function (selector, validator) {
+            insert(selector, validator, true);
+        };
 
-	/**
-	 * Reduce the registered validators to the given amount
-	 * Behaves similar to native array (e.g [1,2,3,4,5,6,7,8,9,0].length = 5 -> [1,2,3,4,5])
-	 * @param {number} amount
-	 */
-	function setLength( amount ) {
-		var length = registry.length,
-			index = length - 1;
-		for( index; index >= 0 && length > amount; index-- ) {
-			if( !registry[index].fix ) {
-				registry.splice( index, 1 );
-				length--;
-			}
-		}
-	}
+        /**
+         * Append validator to validator stack
+         * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
+         * @param {Function} validator
+         */
+        this.append = function (selector, validator) {
+            insert(selector, validator, false);
+        };
 
-	/**
-	 * Registry handler
-	 * @type {Object}
-	 */
-	$.validating = Object.defineProperty( {
-		prepend: prepend,
-		append: append,
-		remove: remove
-	}, 'length', {
-		configurable: false,
-		enumerable: false,
-		get: getLength,
-		set: setLength
-	} );
+        /**
+         * Remove validator from validator stack
+         * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
+         * @param {Function} [validator]
+         * @returns {number}
+         */
+        this.remove = function (selector, validator) {
+            var amount = 0,
+                index, entry;
+            if (selector && (isUndefined(validator) || $.isFunction(validator))) {
+                index = registry.length;
+                while (index > 0) {
+                    index--;
+                    entry = registry[index];
+                    if (entry.selector === selector && (entry.validator === validator || !entry.fix && isUndefined(validator))) {
+                        registry.splice(index, 1);
+                        amount++;
+                    }
+                }
+            }
+            return amount;
+        };
 
-	/**
-	 * Trigger validation process
-	 * @param {boolean} [notify=false]
-	 * @returns {promise}
-	 */
-	$.fn.validating = function( notify ) {
-		var promises = [],
-			trigger;
+        /**
+         * Trigger validation process
+         * @param {jQuery} elements
+         * @param {boolean} [notify=false]
+         * @returns {promise}
+         */
+        this.validate = function (elements, notify) {
+            var promises = [];
 
-		/**
-		 * Trigger status event on element
-		 * if it is enabled.
-		 * @type {Function}
-		 */
-		trigger = notify ? function( element, name, value ) {
-			element.trigger( name + '.validating', value );
-		} : $.noop;
+            /**
+             * Validate each element
+             */
+            elements.each(function () {
+                var element = $(this),
+                    elementPromises = [];
 
-		/**
-		 * Validate each element
-		 */
-		this.each( function() {
-			var element = $( this ),
-				elementPromises = [];
+                $.each(registry, function () {
+                    var issue = element.is(this.selector) && this.validator.call(element, element);
+                    if (isPromise(issue)) {
+                        elementPromises.push(issue);
+                    } else if (isBoolean(issue)) {
+                        return issue;
+                    } else if (!isUndefined(issue)) {
+                        elementPromises.push($.Deferred().reject(issue).promise());
+                        return false;
+                    }
+                });
 
-			$.each( registry, function() {
-				var issue = element.is( this.selector ) && this.validator.call( element, element );
-				if( isPromise( issue ) ) {
-					elementPromises.push( issue );
-				} else if( issue ) {
-					elementPromises.push( $.Deferred().reject( issue ).promise() );
-					return false;
-				}
-			} );
+                elementPromises = $.when.apply($, elementPromises);
+                promises.push(elementPromises);
+                if (notify) {
+                    element.trigger('validating.validating', elementPromises);
+                    elementPromises.then(function () {
+                        element.trigger('valid.validating');
+                    }, function (issue) {
+                        element.trigger('invalid.validating', issue);
+                    });
+                }
+            });
 
-			elementPromises = $.when.apply( $, elementPromises );
-			promises.push( elementPromises );
-			trigger( element, 'validating', elementPromises );
-			elementPromises.then( function() {
-				trigger( element, 'valid' );
-			}, function( issue ) {
-				trigger( element, 'invalid', issue );
-			} );
-		} );
+            return $.when.apply($, promises).then($.noop);
+        };
 
-		return $.when.apply( $, promises ).then( $.noop );
-	};
+        /**
+         * Registry handler
+         * @type {Object}
+         */
+        Object.defineProperty(this, 'length', {
+            configurable : false,
+            enumerable   : false,
+            get          : function () {
+                return registry.length;
+            },
+            set          : function (length) {
+                registry.length = length;
+            }
+        });
 
-}( jQuery ));
+    };
+
+}(jQuery));

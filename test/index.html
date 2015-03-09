@@ -15,8 +15,8 @@
 
             QUnit.test('module exists', function (assert) {
                 var controller;
-                assert.equal(typeof $.validating, 'function');
-                controller = $.validating();
+                assert.equal(typeof $.Validating, 'function');
+                controller = $.Validating();
                 assert.equal(typeof controller, 'object');
                 assert.equal(typeof controller.validate, 'function');
                 assert.equal(typeof controller.prepend, 'function');
@@ -26,7 +26,7 @@
             });
 
             QUnit.test('validate returns promise', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         promise = controller.validate($('.text'));
                 assert.equal(typeof promise, 'object');
                 assert.equal(typeof promise.then, 'function');
@@ -34,7 +34,7 @@
 
             QUnit.test('empty register succeeds', function (assert) {
                 var done = assert.async();
-                $.validating().validate($('.text')).then(function () {
+                $.Validating().validate($('.text')).then(function () {
                     assert.ok(true);
                 }, function () {
                     assert.ok(false);
@@ -43,7 +43,7 @@
 
             QUnit.test('append + prepend', function (assert) {
                 var done = assert.async(),
-                        controller = $.validating(),
+                        controller = $.Validating(),
                         test = 0;
                 controller.append(':input', function () {
                     assert.equal(test, 2);
@@ -73,7 +73,7 @@
             });
 
             QUnit.test('remove by name', function (assert) {
-                var controller = $.validating();
+                var controller = $.Validating();
                 controller.append(':input', $.noop);
                 controller.append(':input', function () {
                 });
@@ -82,7 +82,7 @@
             });
 
             QUnit.test('remove by function', function (assert) {
-                var controller = $.validating();
+                var controller = $.Validating();
                 controller.append(':input', $.noop);
                 controller.append(':input', function () {
                 });
@@ -91,7 +91,7 @@
             });
 
             QUnit.test('manipulating length', function (assert) {
-                var controller = $.validating();
+                var controller = $.Validating();
                 controller.append(':input', $.noop);
                 controller.append(':input', $.noop);
                 controller.append(':input', $.noop);
@@ -104,7 +104,7 @@
             });
 
             QUnit.test('noop validators results in successful validation', function (assert) {
-                var controller = $.validating();
+                var controller = $.Validating();
                 controller.append(':input', $.noop);
                 controller.append(':input', $.noop);
                 assert.equal(controller.length, 2);
@@ -119,7 +119,7 @@
             });
 
             QUnit.test('validators results fails by first data return', function (assert) {
-                var controller = $.validating();
+                var controller = $.Validating();
                 controller.append(':input', function () {
                     return 'no1';
                 });
@@ -139,7 +139,7 @@
             });
 
             QUnit.test('validators results succeeds by promise', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         defer1 = $.Deferred(),
                         defer2 = $.Deferred(),
                         result;
@@ -165,7 +165,7 @@
             });
 
             QUnit.test('validators results fails by promise', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         defer1 = $.Deferred(),
                         defer2 = $.Deferred(),
                         result;
@@ -192,7 +192,7 @@
             });
 
             QUnit.test('silent validation', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         input = $('.text');
                 controller.append(':input', function () {
                 });
@@ -204,7 +204,7 @@
             });
 
             QUnit.test('notified passing validation', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         input = $('.text');
                 controller.append(':input', function () {
                 });
@@ -221,7 +221,7 @@
             });
 
             QUnit.test('notified failing validation', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         input = $('.text');
                 controller.append(':input', function () {
                     return 'error';
@@ -239,7 +239,7 @@
             });
 
             QUnit.test('run all validators on undefined', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         amount = 0;
                 controller.append(':input', function () {
                     amount++;
@@ -259,7 +259,7 @@
             });
 
             QUnit.test('run all validators on true value', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         amount = 0;
                 controller.append(':input', function () {
                     amount++;
@@ -282,7 +282,7 @@
             });
 
             QUnit.test('break validator sequence by false', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         amount = 0;
                 controller.append(':input', function () {
                     amount++;
@@ -308,7 +308,7 @@
             });
 
             QUnit.test('break validator sequence by error', function (assert) {
-                var controller = $.validating(),
+                var controller = $.Validating(),
                         amount = 0;
                 controller.append(':input', function () {
                     amount++;
