@@ -11,6 +11,15 @@
     }
 
     /**
+     * Is the value an boolean?
+     * @param value
+     * @returns {boolean}
+     */
+    function isBoolean(value) {
+        return typeof value === 'boolean' || value instanceof Boolean;
+    }
+
+    /**
      * Is this a promise object?
      * @param {*} promise
      * @returns {boolean}
@@ -99,21 +108,23 @@
              * Validate each element
              */
             elements.each(function () {
-                var element = $( this ),
+                var element = $(this),
                     elementPromises = [];
 
-                $.each( registry, function() {
-                    var issue = element.is( this.selector ) && this.validator.call( element, element );
-                    if( isPromise( issue ) ) {
-                        elementPromises.push( issue );
-                    } else if( issue ) {
-                        elementPromises.push( $.Deferred().reject( issue ).promise() );
+                $.each(registry, function () {
+                    var issue = element.is(this.selector) && this.validator.call(element, element);
+                    if (isPromise(issue)) {
+                        elementPromises.push(issue);
+                    } else if (isBoolean(issue)) {
+                        return issue;
+                    } else if (!isUndefined(issue)) {
+                        elementPromises.push($.Deferred().reject(issue).promise());
                         return false;
                     }
-                } );
+                });
 
-                elementPromises = $.when.apply( $, elementPromises );
-                promises.push( elementPromises );
+                elementPromises = $.when.apply($, elementPromises);
+                promises.push(elementPromises);
                 if (notify) {
                     element.trigger('validating.validating', elementPromises);
                     elementPromises.then(function () {

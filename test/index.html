@@ -237,6 +237,102 @@
                 });
                 controller.validate(input, true);
             });
+
+            QUnit.test('run all validators on undefined', function (assert) {
+                var controller = $.validating(),
+                        amount = 0;
+                controller.append(':input', function () {
+                    amount++;
+                });
+                controller.append(':input', function () {
+                    amount++;
+                });
+                controller.append(':input', function () {
+                    amount++;
+                });
+                controller.validate($('.text')).then(function () {
+                    assert.ok(true);
+                }, function () {
+                    assert.ok(false);
+                });
+                assert.equal(amount, 3);
+            });
+
+            QUnit.test('run all validators on true value', function (assert) {
+                var controller = $.validating(),
+                        amount = 0;
+                controller.append(':input', function () {
+                    amount++;
+                    return true;
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    return Boolean(true);
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    return true;
+                });
+                controller.validate($('.text')).then(function () {
+                    assert.ok(true);
+                }, function () {
+                    assert.ok(false);
+                });
+                assert.equal(amount, 3);
+            });
+
+            QUnit.test('break validator sequence by false', function (assert) {
+                var controller = $.validating(),
+                        amount = 0;
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(true);
+                    return true;
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(true);
+                    return Boolean(false);
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(false);
+                    return true;
+                });
+                controller.validate($('.text')).then(function () {
+                    assert.ok(true);
+                }, function () {
+                    assert.ok(false);
+                });
+                assert.equal(amount, 2);
+            });
+
+            QUnit.test('break validator sequence by error', function (assert) {
+                var controller = $.validating(),
+                        amount = 0;
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(true);
+                    return true;
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(true);
+                    return 'error';
+                });
+                controller.append(':input', function () {
+                    amount++;
+                    assert.ok(false);
+                    return true;
+                });
+                controller.validate($('.text')).then(function () {
+                    assert.ok(false);
+                }, function (error) {
+                    assert.ok(true);
+                    assert.equal(error, 'error');
+                });
+                assert.equal(amount, 2);
+            });
         });
     </script>
 </head>
