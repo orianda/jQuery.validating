@@ -1,224 +1,248 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-	<meta charset="utf-8"/>
-	<title>jQuery.validating</title>
-	<script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
-	<link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
-	<script type="text/javascript" src="../bower_components/qunit/qunit/qunit.js"></script>
-	<script type="text/javascript" src="../src/index.js"></script>
-	<script type="text/javascript">
-		jQuery( function( $ ) {
-			"use strict";
+    <meta charset="utf-8"/>
+    <title>jQuery.validating</title>
+    <script type="text/javascript" src="../bower_components/jquery/dist/jquery.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="../bower_components/qunit/qunit/qunit.css"/>
+    <script type="text/javascript" src="../bower_components/qunit/qunit/qunit.js"></script>
+    <script type="text/javascript" src="../src/index.js"></script>
+    <script type="text/javascript">
+        jQuery(function ($) {
+            "use strict";
 
-			QUnit.config.reorder = false;
+            QUnit.config.reorder = false;
 
-			QUnit.test( 'module exists', function( assert ) {
-				assert.equal( typeof $.validating, 'object' );
-				assert.equal( typeof $( '.text' ).validating, 'function' );
-			} );
+            QUnit.test('module exists', function (assert) {
+                var controller;
+                assert.equal(typeof $.validating, 'function');
+                controller = $.validating();
+                assert.equal(typeof controller, 'object');
+                assert.equal(typeof controller.validate, 'function');
+                assert.equal(typeof controller.prepend, 'function');
+                assert.equal(typeof controller.append, 'function');
+                assert.equal(typeof controller.remove, 'function');
+                assert.equal(controller.length, 0);
+            });
 
-			QUnit.test( 'returns promise', function( assert ) {
-				var promise = $( '.text' ).validating();
-				assert.equal( typeof promise, 'object' );
-				assert.equal( typeof promise.then, 'function' );
-			} );
+            QUnit.test('validate returns promise', function (assert) {
+                var controller = $.validating(),
+                        promise = controller.validate($('.text'));
+                assert.equal(typeof promise, 'object');
+                assert.equal(typeof promise.then, 'function');
+            });
 
-			QUnit.test( 'empty register succeeds', function( assert ) {
-				var done = assert.async();
-				$( '.text' ).validating().then( function() {
-					assert.ok( true );
-				}, function() {
-					assert.ok( false );
-				} ).always( done );
-			} );
+            QUnit.test('empty register succeeds', function (assert) {
+                var done = assert.async();
+                $.validating().validate($('.text')).then(function () {
+                    assert.ok(true);
+                }, function () {
+                    assert.ok(false);
+                }).always(done);
+            });
 
-			QUnit.test( 'append + prepend', function( assert ) {
-				var done = assert.async(),
-						test = 0;
-				$.validating.append( ':input', function() {
-					assert.equal( test, 2 );
-					test++;
-				} );
-				$.validating.append( ':input', function() {
-					assert.equal( test, 3 );
-					test++;
-				} );
-				$.validating.prepend( ':input', function() {
-					assert.equal( test, 1 );
-					test++;
-				} );
-				$.validating.append( ':input', function() {
-					assert.equal( test, 4 );
-					test++;
-				} );
-				$.validating.prepend( ':input', function() {
-					assert.equal( test, 0 );
-					test++;
-				} );
-				assert.equal( $.validating.length, 5 );
-				$( '.text' ).validating().always( function() {
-					assert.equal( test, 5 );
-					done();
-				} );
-			} );
+            QUnit.test('append + prepend', function (assert) {
+                var done = assert.async(),
+                        controller = $.validating(),
+                        test = 0;
+                controller.append(':input', function () {
+                    assert.equal(test, 2);
+                    test++;
+                });
+                controller.append(':input', function () {
+                    assert.equal(test, 3);
+                    test++;
+                });
+                controller.prepend(':input', function () {
+                    assert.equal(test, 1);
+                    test++;
+                });
+                controller.append(':input', function () {
+                    assert.equal(test, 4);
+                    test++;
+                });
+                controller.prepend(':input', function () {
+                    assert.equal(test, 0);
+                    test++;
+                });
+                assert.equal(controller.length, 5);
+                controller.validate($('.text')).always(function () {
+                    assert.equal(test, 5);
+                    done();
+                });
+            });
 
-			QUnit.test( 'remove by name', function( assert ) {
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('remove by name', function (assert) {
+                var controller = $.validating();
+                controller.append(':input', $.noop);
+                controller.append(':input', function () {
+                });
+                controller.remove(':input');
+                assert.equal(controller.length, 0);
+            });
 
-			QUnit.test( 'remove by function', function( assert ) {
-				$.validating.append( ':input', $.noop );
-				$.validating.append( ':input', function() {
-				} );
-				assert.equal( $.validating.length, 2 );
-				$.validating.remove( ':input', $.noop );
-				assert.equal( $.validating.length, 1 );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('remove by function', function (assert) {
+                var controller = $.validating();
+                controller.append(':input', $.noop);
+                controller.append(':input', function () {
+                });
+                controller.remove(':input', $.noop);
+                assert.equal(controller.length, 1);
+            });
 
-			QUnit.test( 'keep fixed', function( assert ) {
-				$.validating.append( ':input', $.noop, false );
-				$.validating.append( ':input', $.noop, true );
-				assert.equal( $.validating.length, 2 );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 1 );
-				$.validating.remove( ':input', $.noop );
-				assert.equal( $.validating.length, 0 );
+            QUnit.test('manipulating length', function (assert) {
+                var controller = $.validating();
+                controller.append(':input', $.noop);
+                controller.append(':input', $.noop);
+                controller.append(':input', $.noop);
+                controller.append(':input', $.noop);
+                assert.equal(controller.length, 4);
+                controller.length = 2;
+                assert.equal(controller.length, 2);
+                controller.length = 0;
+                assert.equal(controller.length, 0);
+            });
 
-				$.validating.append( ':input', $.noop, false );
-				$.validating.append( ':input', $.noop, true );
-				assert.equal( $.validating.length, 2 );
-				$.validating.remove( ':input', $.noop );
-				assert.equal( $.validating.length, 0 );
+            QUnit.test('noop validators results in successful validation', function (assert) {
+                var controller = $.validating();
+                controller.append(':input', $.noop);
+                controller.append(':input', $.noop);
+                assert.equal(controller.length, 2);
+                controller.validate($('.text')).then(function () {
+                    assert.equal(arguments.length, 1);
+                    assert.equal(arguments[0], undefined);
+                    assert.ok(true);
+                }, function () {
+                    assert.equal(arguments.length, 1);
+                    assert.ok(false);
+                });
+            });
 
-				$.validating.append( ':input', function() {
-				}, false );
-				$.validating.append( ':input', $.noop, true );
-				assert.equal( $.validating.length, 2 );
-				$.validating.remove( ':input', $.noop );
-				assert.equal( $.validating.length, 1 );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('validators results fails by first data return', function (assert) {
+                var controller = $.validating();
+                controller.append(':input', function () {
+                    return 'no1';
+                });
+                controller.append(':input', function () {
+                    return 'no2'
+                });
+                assert.equal(controller.length, 2);
+                controller.validate($('.text')).then(function () {
+                    assert.equal(arguments.length, 1);
+                    assert.equal(arguments[0], undefined);
+                    assert.ok(false);
+                }, function (error) {
+                    assert.equal(arguments.length, 1);
+                    assert.equal(error, 'no1');
+                    assert.ok(true);
+                });
+            });
 
-			QUnit.test( 'manipulating length removes none fixed entries', function( assert ) {
-				var noop = function() {
-				};
-				$.validating.append( ':input', $.noop, false );
-				$.validating.append( ':input', $.noop, true );
-				$.validating.append( ':input', noop, false );
-				$.validating.append( ':input', noop, true );
-				assert.equal( $.validating.length, 4 );
-				$.validating.length = 0;
-				assert.equal( $.validating.length, 2 );
-				$.validating.remove( ':input', $.noop );
-				$.validating.remove( ':input', noop );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('validators results succeeds by promise', function (assert) {
+                var controller = $.validating(),
+                        defer1 = $.Deferred(),
+                        defer2 = $.Deferred(),
+                        result;
+                controller.append(':input', function () {
+                    return defer1.promise();
+                });
+                controller.append(':input', function () {
+                    return defer2.promise();
+                });
+                assert.equal(controller.length, 2);
+                result = controller.validate($('.text')).then(function () {
+                    assert.equal(arguments.length, 1);
+                    assert.equal(arguments[0], undefined);
+                    assert.ok(true);
+                }, function () {
+                    assert.equal(arguments.length, 1);
+                    assert.ok(false);
+                });
+                defer1.resolve();
+                assert.equal(result.state(), 'pending');
+                defer2.resolve();
+                assert.equal(result.state(), 'resolved');
+            });
 
-			QUnit.test( 'noop validators results in successful validation', function( assert ) {
-				$.validating.append( ':input', $.noop );
-				$.validating.append( ':input', $.noop );
-				assert.equal( $.validating.length, 2 );
-				$( '.text' ).validating().then( function() {
-					assert.equal( arguments.length, 1 );
-					assert.equal( arguments[0], undefined );
-					assert.ok( true );
-				}, function() {
-					assert.equal( arguments.length, 1 );
-					assert.ok( false );
-				} );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('validators results fails by promise', function (assert) {
+                var controller = $.validating(),
+                        defer1 = $.Deferred(),
+                        defer2 = $.Deferred(),
+                        result;
+                controller.append(':input', function () {
+                    return defer1.promise();
+                });
+                controller.append(':input', function () {
+                    return defer2.promise();
+                });
+                assert.equal(controller.length, 2);
+                result = controller.validate($('.text')).then(function () {
+                    assert.equal(arguments.length, 1);
+                    assert.equal(arguments[0], undefined);
+                    assert.ok(false);
+                }, function (error) {
+                    assert.ok(true);
+                    assert.equal(arguments.length, 1);
+                    assert.equal(error, 'no2');
+                });
+                defer2.reject('no2');
+                assert.equal(result.state(), 'rejected');
+                defer1.reject('no1');
+                assert.equal(result.state(), 'rejected');
+            });
 
-			QUnit.test( 'validators results fails by first data return', function( assert ) {
-				$.validating.append( ':input', function() {
-					return 'no1';
-				} );
-				$.validating.append( ':input', function() {
-					return 'no2'
-				} );
-				assert.equal( $.validating.length, 2 );
-				$( '.text' ).validating().then( function() {
-					assert.equal( arguments.length, 1 );
-					assert.equal( arguments[0], undefined );
-					assert.ok( false );
-				}, function( error ) {
-					assert.equal( arguments.length, 1 );
-					assert.equal( error, 'no1' );
-					assert.ok( true );
-				} );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('silent validation', function (assert) {
+                var controller = $.validating(),
+                        input = $('.text');
+                controller.append(':input', function () {
+                });
+                input.on('.validating', function () {
+                    assert.ok(false);
+                });
+                controller.validate(input);
+                assert.ok(true);
+            });
 
-			QUnit.test( 'validators results succeeds by promise', function( assert ) {
-				var defer1 = $.Deferred(),
-						defer2 = $.Deferred(),
-						done = false;
-				$.validating.append( ':input', function() {
-					return defer1.promise();
-				} );
-				$.validating.append( ':input', function() {
-					return defer2.promise();
-				} );
-				assert.equal( $.validating.length, 2 );
-				$( '.text' ).validating().then( function() {
-					assert.equal( arguments.length, 1 );
-					assert.equal( arguments[0], undefined );
-					assert.ok( true );
-				}, function() {
-					assert.equal( arguments.length, 1 );
-					assert.ok( false );
-				} ).always( function() {
-					done = true;
-				} );
-				defer1.resolve();
-				assert.equal( done, false );
-				defer2.resolve();
-				assert.equal( done, true );
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
+            QUnit.test('notified passing validation', function (assert) {
+                var controller = $.validating(),
+                        input = $('.text');
+                controller.append(':input', function () {
+                });
+                input.on('validating.validating', function () {
+                    assert.ok(true);
+                });
+                input.on('valid.validating', function () {
+                    assert.ok(true);
+                });
+                input.on('invalid.validating', function () {
+                    assert.ok(false);
+                });
+                controller.validate(input, true);
+            });
 
-			QUnit.test( 'validators results fails by promise', function( assert ) {
-				var defer1 = $.Deferred(),
-						defer2 = $.Deferred(),
-						done=false;
-				$.validating.append( ':input', function() {
-					return defer1.promise();
-				} );
-				$.validating.append( ':input', function() {
-					return defer2.promise();
-				} );
-				assert.equal( $.validating.length, 2 );
-				$( '.text' ).validating().then( function() {
-					assert.equal( arguments.length, 1 );
-					assert.equal( arguments[0], undefined );
-					assert.ok( false );
-				}, function( error ) {
-					assert.ok( true );
-					assert.equal( arguments.length, 1 );
-					assert.equal( error, 'no2' );
-				} ).always(function(){
-					done=true;
-				});
-				defer2.reject('no2');
-				assert.equal(done,true);
-				defer2.reject('no1');
-				$.validating.remove( ':input' );
-				assert.equal( $.validating.length, 0 );
-			} );
-		} );
-	</script>
+            QUnit.test('notified failing validation', function (assert) {
+                var controller = $.validating(),
+                        input = $('.text');
+                controller.append(':input', function () {
+                    return 'error';
+                });
+                input.on('validating.validating', function () {
+                    assert.ok(true);
+                });
+                input.on('valid.validating', function () {
+                    assert.ok(false);
+                });
+                input.on('invalid.validating', function () {
+                    assert.ok(true);
+                });
+                controller.validate(input, true);
+            });
+        });
+    </script>
 </head>
 <body>
-	<div id="qunit"></div>
-	<div id="qunit-fixture"></div>
-	<input type="text" name="text" value="text" placeholder="text" class="text"/>
+    <div id="qunit"></div>
+    <div id="qunit-fixture"></div>
+    <input type="text" name="text" value="text" placeholder="text" class="text"/>
 </body>
 </html>
