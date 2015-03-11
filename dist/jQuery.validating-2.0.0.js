@@ -2,7 +2,7 @@
  * jQuery.validating
  * jQuery plugin to validate elements
  *
- * @version v1.0.0
+ * @version v2.0.0
  * @link https://github.com/orianda/jQuery.validating
  * @author Orianda <orianda@paan.de>
  * @license MIT
@@ -128,7 +128,7 @@
                     elementPromises = [];
 
                 $.each(registry, function () {
-                    var issue = element.is(this.selector) && this.validator.call(element, element);
+                    var issue = element.is(this.selector) ? this.validator.call(element, element) : undefined;
                     if (isPromise(issue)) {
                         elementPromises.push(issue);
                     } else if (isBoolean(issue)) {
