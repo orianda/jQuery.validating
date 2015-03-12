@@ -142,7 +142,11 @@
                 }
             });
 
-            return $.when.apply($, promises).then($.noop);
+            return $.when.apply($, promises).then(function () {
+                return undefined;
+            }, function (error) {
+                return elements.length === 1 ? error : undefined;
+            });
         };
 
         /**
