@@ -2,7 +2,7 @@
  * jQuery.validating
  * jQuery plugin to validate elements
  *
- * @version v2.0.0
+ * @version v2.0.1
  * @link https://github.com/orianda/jQuery.validating
  * @author Orianda <orianda@paan.de>
  * @license MIT
@@ -151,7 +151,11 @@
                 }
             });
 
-            return $.when.apply($, promises).then($.noop);
+            return $.when.apply($, promises).then(function () {
+                return undefined;
+            }, function (error) {
+                return elements.length === 1 ? error : undefined;
+            });
         };
 
         /**
