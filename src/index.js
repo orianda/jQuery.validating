@@ -89,13 +89,15 @@
          * Register validator
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} data
          * @param {boolean} prepend
          */
-        function insert(selector, validator, prepend) {
+        function insert(selector, validator, data, prepend) {
             if (selector && $.isFunction(validator)) {
                 registry[prepend ? 'unshift' : 'push']({
                     selector  : selector,
-                    validator : validator
+                    validator : validator,
+                    data      : data
                 });
             }
         }
@@ -104,18 +106,20 @@
          * Prepend validator to validator stack
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} [data]
          */
-        this.prepend = function (selector, validator) {
-            insert(selector, validator, true);
+        this.prepend = function (selector, validator, data) {
+            insert(selector, validator, data, true);
         };
 
         /**
          * Append validator to validator stack
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} [data]
          */
-        this.append = function (selector, validator) {
-            insert(selector, validator, false);
+        this.append = function (selector, validator, data) {
+            insert(selector, validator, data, false);
         };
 
         /**
@@ -154,12 +158,15 @@
              * Validate each element
              */
             elements.each(function () {
-                var bare = this,
-                    element = $(bare),
-                    elementPromises = [];
+                var element = $(this),
+                    elementPromises = [],
+                    context = {};
 
                 $.each(registry, function () {
-                    var issue = element.is(this.selector) ? this.validator.call(bare, bare) : undefined;
+                    var issue;
+                    if (element.is(this.selector)) {
+                        issue = this.validator.call(context, element[0], this.data);
+                    }
                     if (isPromise(issue)) {
                         elementPromises.push(issue);
                     } else if (isBoolean(issue)) {

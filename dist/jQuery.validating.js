@@ -2,7 +2,7 @@
  * jQuery.validating
  * jQuery plugin to validate elements
  *
- * @version v2.0.1
+ * @version v2.0.2
  * @link https://github.com/orianda/jQuery.validating
  * @author Orianda <orianda@paan.de>
  * @license MIT
@@ -37,6 +37,45 @@
         return promise instanceof Object && typeof promise.then === 'function';
     }
 
+    function wait(promises) {
+        var defer = $.Deferred(),
+            finished = 0,
+            action = 'resolve',
+            issue, i, l;
+
+        /**
+         * Fail handler
+         * @param {*} error
+         */
+        function fail(error) {
+            action = 'reject';
+            issue = error;
+        }
+
+        /**
+         * Reduce counter and finish deferred
+         * if the last element promise resolved
+         */
+        function finish() {
+            finished++;
+            if (finished <= l) {
+                return;
+            }
+            if (isUndefined(issue) || l > 1) {
+                defer[action]();
+            } else {
+                defer[action](issue);
+            }
+        }
+
+        for (i = 0, l = promises.length; i < l; i++) {
+            promises[i].fail(fail).always(finish);
+        }
+
+        finish();
+        return defer.promise();
+    }
+
     /**
      * Create validator controller
      */
@@ -59,13 +98,15 @@
          * Register validator
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} data
          * @param {boolean} prepend
          */
-        function insert(selector, validator, prepend) {
+        function insert(selector, validator, data, prepend) {
             if (selector && $.isFunction(validator)) {
                 registry[prepend ? 'unshift' : 'push']({
                     selector  : selector,
-                    validator : validator
+                    validator : validator,
+                    data      : data
                 });
             }
         }
@@ -74,18 +115,20 @@
          * Prepend validator to validator stack
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} [data]
          */
-        this.prepend = function (selector, validator) {
-            insert(selector, validator, true);
+        this.prepend = function (selector, validator, data) {
+            insert(selector, validator, data, true);
         };
 
         /**
          * Append validator to validator stack
          * @param {string|Function|jQuery|HTMLElement|HTMLElement[]} selector
          * @param {Function} validator
+         * @param {Object} [data]
          */
-        this.append = function (selector, validator) {
-            insert(selector, validator, false);
+        this.append = function (selector, validator, data) {
+            insert(selector, validator, data, false);
         };
 
         /**
@@ -125,10 +168,14 @@
              */
             elements.each(function () {
                 var element = $(this),
-                    elementPromises = [];
+                    elementPromises = [],
+                    context = {};
 
                 $.each(registry, function () {
-                    var issue = element.is(this.selector) ? this.validator.call(element, element) : undefined;
+                    var issue;
+                    if (element.is(this.selector)) {
+                        issue = this.validator.call(context, element[0], this.data);
+                    }
                     if (isPromise(issue)) {
                         elementPromises.push(issue);
                     } else if (isBoolean(issue)) {
@@ -151,14 +198,7 @@
                 }
             });
 
-            /**
-             * todo: return if all promises are finished
-             */
-            return $.when.apply($, promises).then(function () {
-                return undefined;
-            }, function (error) {
-                return elements.length === 1 ? error : undefined;
-            });
+            return wait(promises);
         };
 
         /**

@@ -42,8 +42,7 @@
             });
 
             QUnit.test('append + prepend', function (assert) {
-                var done = assert.async(),
-                        controller = $.Validating(),
+                var controller = $.Validating(),
                         test = 0;
                 controller.append(':input', function () {
                     assert.equal(test, 2);
@@ -68,8 +67,8 @@
                 assert.equal(controller.length, 5);
                 controller.validate($('.text')).always(function () {
                     assert.equal(test, 5);
-                    done();
                 });
+                assert.expect(7);
             });
 
             QUnit.test('remove by name', function (assert) {
@@ -127,11 +126,8 @@
                 });
                 assert.equal(controller.length, 2);
                 controller.validate($('.text')).then(function () {
-                    assert.equal(arguments.length, 1);
-                    assert.equal(arguments[0], undefined);
                     assert.ok(false);
                 }, function (error) {
-                    assert.equal(arguments.length, 1);
                     assert.equal(error, 'no1');
                     assert.ok(true);
                 });
@@ -364,7 +360,7 @@
             });
 
             QUnit.test('only get arguments in error case and if there is just one element', function (assert) {
-                var controller = $.Validating()
+                var controller = $.Validating();
                 controller.append('input[name=valid]', $.noop);
                 controller.append('input[name=invalid]', function () {
                     return 'error';
@@ -381,6 +377,23 @@
                 ].join(''))).always(null, function () {
                     assert.equal(arguments.length, 0);
                 });
+            });
+
+            QUnit.test('context check', function (assert) {
+                var controller = $.Validating(),
+                        data1 = {},
+                        data2 = {};
+                controller.prepend(':input', function (element, data) {
+                    assert.equal(data, data1);
+                    assert.equal(this.check, undefined);
+                    this.check = true;
+                }, data1);
+                controller.append(':input', function (element, data) {
+                    assert.equal(data, data2);
+                    assert.equal(this.check, true);
+                }, data2);
+                controller.validate($('<input type="text"/>'));
+                assert.expect(4);
             });
         });
     </script>

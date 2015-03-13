@@ -1,6 +1,6 @@
 {
   "name": "jQuery.validating",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "jQuery plugin to validate elements",
   "homepage": "https://github.com/orianda/jQuery.validating",
   "main": "src/index.js",
