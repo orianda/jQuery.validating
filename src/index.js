@@ -28,6 +28,45 @@
         return promise instanceof Object && typeof promise.then === 'function';
     }
 
+    function wait(promises) {
+        var defer = $.Deferred(),
+            finished = 0,
+            action = 'resolve',
+            issue, i, l;
+
+        /**
+         * Fail handler
+         * @param {*} error
+         */
+        function fail(error) {
+            action = 'reject';
+            issue = error;
+        }
+
+        /**
+         * Reduce counter and finish deferred
+         * if the last element promise resolved
+         */
+        function finish() {
+            finished++;
+            if (finished <= l) {
+                return;
+            }
+            if (isUndefined(issue) || l > 1) {
+                defer[action]();
+            } else {
+                defer[action](issue);
+            }
+        }
+
+        for (i = 0, l = promises.length; i < l; i++) {
+            promises[i].fail(fail).always(finish);
+        }
+
+        finish();
+        return defer.promise();
+    }
+
     /**
      * Create validator controller
      */
@@ -142,11 +181,7 @@
                 }
             });
 
-            return $.when.apply($, promises).then(function () {
-                return undefined;
-            }, function (error) {
-                return elements.length === 1 ? error : undefined;
-            });
+            return wait(promises);
         };
 
         /**

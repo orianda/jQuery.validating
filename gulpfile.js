@@ -6,7 +6,7 @@ gulp.task('jshint', 'JsHint check for source files.', function () {
     var jshint = require('gulp-jshint');
     return gulp.src('src/**/*.js')
         .pipe(jshint({
-            lookup: true
+            lookup : true
         }))
         .pipe(jshint.reporter('default'))
         .pipe(jshint.reporter('fail'));
@@ -24,8 +24,8 @@ gulp.task('build:script', 'Concatenate script files into one file and prepend th
         fs = require('fs'),
         banner = fs.readFileSync('banner.txt', 'utf8');
     return gulp.src('src/**/*.js')
-        .pipe(concat(pkg.name + '-' + pkg.version + '.js'))
-        .pipe(header(banner, {pkg: pkg}))
+        .pipe(concat(pkg.name + '.js'))
+        .pipe(header(banner, {pkg : pkg}))
         .pipe(gulp.dest('dist'));
 });
 
@@ -35,12 +35,12 @@ gulp.task('build:compress', 'Compress script files.', function () {
         rename = require('gulp-rename');
     return gulp.src('dist/**/*.js')
         .pipe(rename({
-            suffix: '.min'
+            suffix : '.min'
         }))
         .pipe(sourcemaps.init())
         .pipe(uglify({
-            output: {
-                comments: /@preserve|@license|@cc_on/i
+            output : {
+                comments : /@preserve|@license|@cc_on/i
             }
         }))
         .pipe(sourcemaps.write('.'))

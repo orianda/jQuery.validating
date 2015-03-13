@@ -109,7 +109,6 @@
                 controller.append(':input', $.noop);
                 assert.equal(controller.length, 2);
                 controller.validate($('.text')).then(function () {
-                    assert.equal(arguments.length, 1);
                     assert.equal(arguments[0], undefined);
                     assert.ok(true);
                 }, function () {
@@ -151,7 +150,6 @@
                 });
                 assert.equal(controller.length, 2);
                 result = controller.validate($('.text')).then(function () {
-                    assert.equal(arguments.length, 1);
                     assert.equal(arguments[0], undefined);
                     assert.ok(true);
                 }, function () {
@@ -332,6 +330,57 @@
                     assert.equal(error, 'error');
                 });
                 assert.equal(amount, 2);
+            });
+
+            QUnit.test('issues promise resolves if all internal promises resolved', function (assert) {
+                var controller = $.Validating(),
+                        defer1 = $.Deferred(),
+                        defer2 = $.Deferred(),
+                        defer3 = $.Deferred(),
+                        done = false;
+                controller.append('input[name=defer1]', function () {
+                    return defer1.promise();
+                });
+                controller.append('input[name=defer2]', function () {
+                    return defer2.promise();
+                });
+                controller.append('input[name=defer3]', function () {
+                    return defer3.promise();
+                });
+                controller.validate($([
+                    '<input type="text" name="defer1"/>',
+                    '<input type="text" name="defer2"/>',
+                    '<input type="text" name="defer3"/>'
+                ].join(''))).always(function () {
+                    done = true;
+                });
+                assert.equal(done, false);
+                defer1.resolve();
+                assert.equal(done, false);
+                defer2.reject();
+                assert.equal(done, false);
+                defer3.reject();
+                assert.equal(done, true);
+            });
+
+            QUnit.test('only get arguments in error case and if there is just one element', function (assert) {
+                var controller = $.Validating()
+                controller.append('input[name=valid]', $.noop);
+                controller.append('input[name=invalid]', function () {
+                    return 'error';
+                });
+                controller.validate($('<input type="text" name="valid"/>')).always(function () {
+                    assert.equal(arguments.length, 0);
+                });
+                controller.validate($('<input type="text" name="invalid"/>')).always(null, function () {
+                    assert.equal(arguments.length, 1);
+                });
+                controller.validate($([
+                    '<input type="text" name="valid"/>',
+                    '<input type="text" name="invalid"/>'
+                ].join(''))).always(null, function () {
+                    assert.equal(arguments.length, 0);
+                });
             });
         });
     </script>

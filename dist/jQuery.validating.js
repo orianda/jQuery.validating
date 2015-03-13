@@ -151,6 +151,9 @@
                 }
             });
 
+            /**
+             * todo: return if all promises are finished
+             */
             return $.when.apply($, promises).then(function () {
                 return undefined;
             }, function (error) {
