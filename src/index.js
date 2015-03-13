@@ -154,11 +154,12 @@
              * Validate each element
              */
             elements.each(function () {
-                var element = $(this),
+                var bare = this,
+                    element = $(bare),
                     elementPromises = [];
 
                 $.each(registry, function () {
-                    var issue = element.is(this.selector) ? this.validator.call(element, element) : undefined;
+                    var issue = element.is(this.selector) ? this.validator.call(bare, bare) : undefined;
                     if (isPromise(issue)) {
                         elementPromises.push(issue);
                     } else if (isBoolean(issue)) {
